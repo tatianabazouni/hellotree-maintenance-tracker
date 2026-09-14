@@ -1,0 +1,46 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CLIENT
+  ADMIN
+}
+
+enum RequestStatus {
+  NEW
+  IN_PROGRESS
+  DONE
+}
+
+model User {
+  id           String               @id @default(uuid()) @db.Uuid
+  name         String               @db.VarChar(100)
+  email        String               @unique @db.VarChar(255)
+  passwordHash String
+  role         Role                 @default(CLIENT)
+  requests     MaintenanceRequest[]
+  createdAt    DateTime             @default(now()) @db.Timestamptz(6)
+  updatedAt    DateTime             @updatedAt @db.Timestamptz(6)
+}
+
+model MaintenanceRequest {
+  id             String        @id @default(uuid()) @db.Uuid
+  clientId       String        @db.Uuid
+  client         User          @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  title          String        @db.VarChar(160)
+  description    String        @db.VarChar(2000)
+  status         RequestStatus @default(NEW)
+  resolutionNote String?       @db.VarChar(2000)
+  resolvedAt     DateTime?     @db.Timestamptz(6)
+  createdAt      DateTime      @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime      @updatedAt @db.Timestamptz(6)
+
+  @@index([clientId])
+  @@index([status, createdAt])
+}
