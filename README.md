@@ -1,48 +1,66 @@
-# Hellotree Maintenance Tracker API
+# Hellotree Maintenance Tracker
 
-A compact TypeScript/Express REST API for clients to submit maintenance requests and admins to manage their lifecycle. Prisma provides PostgreSQL persistence; JWT middleware enforces client/admin access; the service layer owns the lifecycle and urgency rules.
+Small website and app maintenance request tracker for Hellotree clients and admins. The backend is a TypeScript/Express API with Prisma and PostgreSQL. The frontend is a Vite React app with a hardcoded demo user switch.
 
-## Requirements
-
-Node.js 20+ and PostgreSQL 14+. Create a database named `maintenance_tracker` (or use any PostgreSQL URL you control).
-
-## Setup
+## Run The Backend
 
 ```bash
+cd backend
 cp .env.example .env
-# Edit DATABASE_URL and replace JWT_SECRET with a long random value.
 npm install
 npm run db:deploy
 npm run db:seed
 npm run dev
 ```
 
-The API listens on `http://localhost:3000` by default. `CORS_ORIGIN` controls the permitted Lovable frontend origin. Production startup uses `npm run build && npm start`.
+The API runs on `http://localhost:3000`.
 
-## Scripts
+## Run The Frontend
 
-- `npm run dev` — watch-mode server.
-- `npm run build`, `npm run typecheck`, `npm run lint`, `npm run format:check` — quality checks.
-- `npm test` — deterministic HTTP behavior suite with an isolated in-memory repository (it never modifies your development database).
-- `npm run db:deploy` — apply committed PostgreSQL migrations.
-- `npm run db:seed` — insert predictable demo records.
+```bash
+cd frontend
+cp .env.example .env
+npm install
+npm run dev
+```
 
-## Demo credentials
+The app runs on `http://localhost:5173`.
 
-All seeded users use password `Password123!`:
+## Demo Users
+
+Use the switcher in the frontend. Seeded users are:
 
 - Admin: `admin@example.com`
-- Clients: `alice@example.com`, `bob@example.com`, `carla@example.com`
+- Clients: `cedar@example.com`, `bluewave@example.com`, `nova@example.com`
 
-## Architecture
+The frontend uses `/api/auth/users` and sends the selected user's ID in `X-Demo-User-Id`. There is no login, password, JWT, or session flow.
 
-- `src/app.ts` configures Express and routes.
-- `src/controllers` parses HTTP concerns; `src/services` enforces domain rules.
-- `src/repositories` maps the repository interface to Prisma/PostgreSQL.
-- `src/middleware` provides auth, roles, and centralized errors.
-- `prisma` contains the reproducible schema, SQL migration, and deterministic seed.
-- `docs/API.md` is the frontend integration contract.
+## Business Rules
 
-## Lovable integration
+- Clients can create requests with `title`, `description`, and `priority`.
+- Clients only see their own requests.
+- Admins see all client requests and can filter by status and client.
+- The API only allows `NEW -> IN_PROGRESS -> DONE`.
+- The API rejects `DONE` without a non-empty resolution note.
+- The admin list flags only urgent requests that are still `NEW` more than 24 hours after their `statusChangedAt` timestamp.
 
-Set the frontend API base to `http://localhost:3000/api`. Login at `/auth/login`, store the returned token, and send it as `Authorization: Bearer <token>`. Clients use `/requests`; administrators use `/admin/requests` and the status patch endpoint. Responses always wrap payloads in `data`, while errors always wrap `code` and `message` in `error`. See [the API contract](docs/API.md) for all request bodies and rules.
+## Verification
+
+Backend checks:
+
+```bash
+cd backend
+npm test
+npm run build
+```
+
+Frontend check:
+
+```bash
+cd frontend
+npm run build
+```
+
+## What Was Cut
+
+Real authentication, notifications, file attachments, comments, and deep design polish were intentionally left out. The assignment allowed fake auth, and the core tracking workflow plus API-enforced business rules are the important parts.
