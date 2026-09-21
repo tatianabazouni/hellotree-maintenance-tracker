@@ -1,8 +1,28 @@
 # Hellotree Maintenance Tracker
 
-Small website and app maintenance request tracker for Hellotree clients and admins. The backend is a TypeScript/Express API with Prisma and PostgreSQL. The frontend is a Vite React app with a hardcoded demo user switch.
+Small website and app maintenance request tracker for Hellotree clients and admins. The backend is a TypeScript/Express API with Prisma and PostgreSQL. The frontend is a React app built with Vite, TanStack Router, and TanStack Query, with a hardcoded demo user switch.
 
-## Run The Backend
+## Prerequisites
+
+- Node.js 20+
+- npm
+- PostgreSQL
+
+The default backend `.env.example` expects this database URL:
+
+```bash
+postgresql://postgres:password@localhost:5432/hellotree_maintenance?schema=public
+```
+
+If you use Docker for PostgreSQL, this command creates a matching local database:
+
+```bash
+docker run --name hellotree-postgres -e POSTGRES_PASSWORD=password -e POSTGRES_DB=hellotree_maintenance -p 5432:5432 -d postgres:16
+```
+
+If you already have PostgreSQL running, create a database named `hellotree_maintenance` or update `backend/.env` with your own connection string.
+
+## Backend
 
 ```bash
 cd backend
@@ -15,7 +35,14 @@ npm run dev
 
 The API runs on `http://localhost:3000`.
 
-## Run The Frontend
+After setup, the backend starts with:
+
+```bash
+cd backend
+npm run dev
+```
+
+## Frontend
 
 ```bash
 cd frontend
@@ -25,6 +52,13 @@ npm run dev
 ```
 
 The app runs on `http://localhost:5173`.
+
+After setup, the frontend starts with:
+
+```bash
+cd frontend
+npm run dev
+```
 
 ## Demo Users
 

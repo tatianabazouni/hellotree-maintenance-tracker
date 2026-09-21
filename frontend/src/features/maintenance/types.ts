@@ -19,7 +19,7 @@ export interface MaintenanceRequest {
   createdAt: string;
   statusChangedAt: string;
   resolutionNote?: string | null;
-  isUrgent?: boolean;
+  isOverdue?: boolean;
 }
 
 export interface DemoUser {

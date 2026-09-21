@@ -3,7 +3,7 @@ export const createRequestSchema = z
   .object({
     title: z.string().trim().min(3).max(160),
     description: z.string().trim().min(10).max(2000),
-    priority: z.enum(['LOW', 'NORMAL', 'URGENT']).default('NORMAL'),
+    priority: z.enum(['LOW', 'NORMAL', 'URGENT']),
   })
   .strict();
 export const statusSchema = z

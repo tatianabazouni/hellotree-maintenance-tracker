@@ -10,12 +10,12 @@ Returns seeded demo users for the hardcoded switcher. The frontend uses the sele
 
 ## Request Object
 
-`id`, `title`, `description`, `priority` (`LOW`, `NORMAL`, `URGENT`), `status` (`NEW`, `IN_PROGRESS`, `DONE`), `createdAt`, `updatedAt`, `statusChangedAt`, `resolutionNote`, `resolvedAt`, and `isUrgent`. Admin responses also contain `client: { id, name, email }`. Timestamps are UTC ISO-8601 strings. `isUrgent` is true only for an `URGENT` request that has remained `NEW` for more than 24 hours according to `statusChangedAt`.
+`id`, `title`, `description`, `priority` (`LOW`, `NORMAL`, `URGENT`), `status` (`NEW`, `IN_PROGRESS`, `DONE`), `createdAt`, `updatedAt`, `statusChangedAt`, `resolutionNote`, `resolvedAt`, and `isOverdue`. Admin responses also contain `client: { id, name, email }`. Timestamps are UTC ISO-8601 strings. `isOverdue` is true only for an `URGENT` request that has remained `NEW` for more than 24 hours according to `statusChangedAt`.
 
 ## Client Endpoints
 
 - `GET /requests` - client only: lists only their own requests.
-- `POST /requests` - client only. Body: `{ "title": "Contact form is failing", "description": "Website leads are not arriving in the shared inbox.", "priority": "URGENT" }`. Returns `201`. The API sets owner and `NEW` status; protected fields are rejected. Priority defaults to `NORMAL` when omitted.
+- `POST /requests` - client only. Body: `{ "title": "Contact form is failing", "description": "Website leads are not arriving in the shared inbox.", "priority": "URGENT" }`. Returns `201`. The API sets owner and `NEW` status; protected fields are rejected. Priority is required.
 - `GET /requests/:id` - demo user required. Clients receive only their own request; another client's ID returns `404`.
 
 ## Admin Endpoints

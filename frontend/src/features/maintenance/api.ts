@@ -24,7 +24,7 @@ interface ApiRequest {
   createdAt: string;
   statusChangedAt: string;
   resolutionNote: string | null;
-  isUrgent?: boolean;
+  isOverdue?: boolean;
   client?: {
     id: string;
     name: string;
@@ -105,7 +105,7 @@ export function toUiRequest(
     createdAt: request.createdAt,
     statusChangedAt: request.statusChangedAt,
     resolutionNote: request.resolutionNote,
-    isUrgent: request.isUrgent ?? false,
+    isOverdue: request.isOverdue ?? false,
   };
 }
 

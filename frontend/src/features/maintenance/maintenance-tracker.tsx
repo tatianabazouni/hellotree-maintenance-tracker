@@ -547,7 +547,7 @@ function AdminDashboard({
       inProgress: requests.filter((item) => item.status === "in_progress")
         .length,
       done: requests.filter((item) => item.status === "done").length,
-      urgentOverdue: requests.filter((item) => item.isUrgent || isOverdue(item))
+      urgentOverdue: requests.filter((item) => item.isOverdue || isOverdue(item))
         .length,
     }),
     [requests],
@@ -710,7 +710,7 @@ function SummaryGrid({
             className="mt-4 font-display text-3xl font-bold"
             aria-label={`${label}: ${available ? value : "unavailable"}`}
           >
-            {available ? value : "—"}
+            {available ? value : "-"}
           </p>
         </div>
       ))}
@@ -778,7 +778,7 @@ function RequestRow({
   onMoveToInProgress?: ((request: MaintenanceRequest) => void) | undefined;
   onMarkDone?: ((request: MaintenanceRequest) => void) | undefined;
 }) {
-  const overdue = mode === "admin" && (request.isUrgent || isOverdue(request));
+  const overdue = mode === "admin" && (request.isOverdue || isOverdue(request));
   return (
     <article className={cn("p-5", overdue && "bg-warning-soft")}>
       <div className="grid gap-4 lg:grid-cols-[1.1fr_1.5fr_0.7fr_0.85fr_0.9fr_1fr] lg:items-center">

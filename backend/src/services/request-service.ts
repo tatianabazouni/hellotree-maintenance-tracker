@@ -11,7 +11,7 @@ const transitions: Record<RequestStatus, RequestStatus | null> = {
   DONE: null,
 };
 export function serializeRequest(request: MaintenanceRequest, includeClient = false) {
-  const urgent =
+  const overdue =
     request.priority === 'URGENT' &&
     request.status === 'NEW' &&
     request.statusChangedAt.getTime() < Date.now() - 24 * 60 * 60 * 1000;
@@ -26,7 +26,7 @@ export function serializeRequest(request: MaintenanceRequest, includeClient = fa
     statusChangedAt: request.statusChangedAt.toISOString(),
     resolutionNote: request.resolutionNote,
     resolvedAt: request.resolvedAt?.toISOString() ?? null,
-    isUrgent: urgent,
+    isOverdue: overdue,
     ...(includeClient && request.client ? { client: request.client } : {}),
   };
 }

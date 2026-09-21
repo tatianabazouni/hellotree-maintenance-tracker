@@ -1,7 +1,8 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
 import { randomUUID } from 'node:crypto';
 import { createApp } from '../src/app.js';
+import { serializeRequest } from '../src/services/request-service.js';
 import type {
   MaintenanceRequest,
   RequestRepository,
@@ -143,23 +144,35 @@ describe('requests', () => {
     ).toBe(400);
     expect(
       (
+        await request(app).post('/api/requests').set(asUser(clientA)).send({
+          title: 'Valid request title',
+          description: 'This description has enough content.',
+        })
+      ).status,
+    ).toBe(400);
+    expect(
+      (
         await request(app)
           .post('/api/requests')
           .set(asUser(admin))
-          .send({ title: 'Valid title', description: 'This description has enough content.' })
+          .send({
+            title: 'Valid title',
+            description: 'This description has enough content.',
+            priority: 'NORMAL',
+          })
       ).status,
     ).toBe(403);
   });
 });
 describe('admin workflow', () => {
-  it('filters at repository level and exposes urgency', async () => {
+  it('filters at repository level and exposes overdue requests', async () => {
     const res = await request(app)
       .get(`/api/admin/requests?status=NEW&clientId=${clientA.id}`)
       .set(asUser(admin));
     expect(res.status).toBe(200);
     expect(res.body.data).toHaveLength(2);
-    expect(res.body.data.find((r: { id: string }) => r.id === oldNew.id).isUrgent).toBe(true);
-    expect(res.body.data.find((r: { id: string }) => r.id === recentNew.id).isUrgent).toBe(false);
+    expect(res.body.data.find((r: { id: string }) => r.id === oldNew.id).isOverdue).toBe(true);
+    expect(res.body.data.find((r: { id: string }) => r.id === recentNew.id).isOverdue).toBe(false);
   });
   it('enforces lifecycle and resolution requirement', async () => {
     const newToDone = await request(app)
@@ -221,5 +234,78 @@ describe('admin workflow', () => {
       .send({ status: 'NEW' });
     expect(progressToNew.status).toBe(409);
     expect(repo.requests.find((item) => item.id === progress.id)?.status).toBe('IN_PROGRESS');
+  });
+});
+describe('overdue serialization', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const makeRequest = (
+    overrides: Partial<Pick<MaintenanceRequest, 'priority' | 'status' | 'statusChangedAt'>> = {},
+  ): MaintenanceRequest => {
+    const now = new Date('2026-09-21T12:00:00.000Z');
+    return {
+      id: randomUUID(),
+      clientId: randomUUID(),
+      title: 'Repair item',
+      description: 'A sufficiently descriptive issue.',
+      priority: 'URGENT',
+      status: 'NEW',
+      resolutionNote: null,
+      resolvedAt: null,
+      statusChangedAt: now,
+      createdAt: now,
+      updatedAt: now,
+      ...overrides,
+    };
+  };
+
+  it('does not flag urgent new requests at exactly 24 hours', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-09-21T12:00:00.000Z'));
+
+    const serialized = serializeRequest(
+      makeRequest({ statusChangedAt: new Date('2026-09-20T12:00:00.000Z') }),
+    );
+
+    expect(serialized.isOverdue).toBe(false);
+  });
+
+  it('flags urgent new requests just after 24 hours', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-09-21T12:00:01.000Z'));
+
+    const serialized = serializeRequest(
+      makeRequest({ statusChangedAt: new Date('2026-09-20T12:00:00.000Z') }),
+    );
+
+    expect(serialized.isOverdue).toBe(true);
+  });
+
+  it('does not flag non-urgent or progressed requests older than 24 hours', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-09-21T12:00:00.000Z'));
+    const oldTimestamp = new Date('2026-09-20T10:00:00.000Z');
+
+    expect(
+      serializeRequest(
+        makeRequest({ priority: 'NORMAL', status: 'NEW', statusChangedAt: oldTimestamp }),
+      ).isOverdue,
+    ).toBe(false);
+    expect(
+      serializeRequest(
+        makeRequest({
+          priority: 'URGENT',
+          status: 'IN_PROGRESS',
+          statusChangedAt: oldTimestamp,
+        }),
+      ).isOverdue,
+    ).toBe(false);
+    expect(
+      serializeRequest(
+        makeRequest({ priority: 'URGENT', status: 'DONE', statusChangedAt: oldTimestamp }),
+      ).isOverdue,
+    ).toBe(false);
   });
 });
